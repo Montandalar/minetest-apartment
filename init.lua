@@ -685,28 +685,32 @@ apartment.after_place_node = function(pos, placer)
 end
 
 
-apartment.can_dig = function(pos,player)
+apartment.can_dig = function(pos, digger)
+	local meta  = minetest.get_meta(pos)
+	local owner = meta:get_string('owner')
+	local original_owner = meta:get_string('original_owner')
+	local pname = digger:get_player_name()
 
-                local meta  = minetest.get_meta(pos);
-		local owner = meta:get_string('owner');
-		local original_owner = meta:get_string( 'original_owner' );
-		local pname = player:get_player_name();
+	if not original_owner or original_owner == '' then
+		return true
+	end
 
-		if( not( original_owner  ) or original_owner == '' ) then
-			return true;
+	if (original_owner ~= owner) then
+		minetest.chat_send_player(pname,
+			string.format('The apartment is currently rented to %s. Please end that first.', owner))
+		return false
+	end
+
+	if (original_owner ~= pname) then
+		if not minetest.check_player_privs(digger, "protection_bypass") then
+			minetest.chat_send_player( pname, 'Sorry. Only the original owner of this apartment control panel can dig it.')
+			return false
+		else
+			return true
 		end
+	end
 
-                if( original_owner ~= pname ) then
-			minetest.chat_send_player( pname, 'Sorry. Only the original owner of this apartment control panel can dig it.');
-			return false;
-		end
-
-		if( original_owner ~= owner ) then
-			minetest.chat_send_player( pname, 'The apartment is currently rented to '..tostring( owner )..'. Please end that first.');
-			return false;
-		end
-
-                return true;
+	return true
 end
 
 
